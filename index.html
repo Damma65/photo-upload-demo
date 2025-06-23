@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,6 +41,16 @@
       font-size: 1.1rem;
       color: #34495e;
     }
+    .photo-placeholder {
+      width: 100%;
+      background-color: #000;
+      color: #fff;
+      border: none;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
     .photo-preview {
       width: 100%;
       max-width: 360px;
@@ -66,8 +75,8 @@
       width: 100%; height: 100%;
       object-fit: cover;
       opacity: 0.6;
+      mix-blend-mode: multiply;
       pointer-events: none;
-      mix-blend-mode: screen;
       border-radius: 8px;
     }
     /* Buttons */
@@ -110,8 +119,7 @@
   <canvas id="canvas" style="display:none;"></canvas>
   <div id="completion-message">
     <img src="greenmotion-logo.png" alt="Green Motion">
-    <p>You're all set! Have a great rental period and enjoy your journey.<br>
-    If anything comes up, contact us at <a href="mailto:rescue@greenmotion.com">rescue@greenmotion.com</a>.</p>
+    <p>You're all set! Have a great rental period and enjoy your journey.<br>If anything comes up, contact us at <a href="mailto:rescue@greenmotion.com">rescue@greenmotion.com</a>.</p>
   </div>
   <script>
     const steps = [
@@ -126,7 +134,7 @@
     let stream;
     function initCamera(videoEl, overlayEl, src) {
       navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then(s => { stream = s; videoEl.srcObject = stream; overlayEl.src = src; })
+        .then(s => { stream = s; videoEl.srcObject = s; overlayEl.src = src; })
         .catch(err => alert('Unable to access camera: ' + err));
     }
     function stopCamera() { if (stream) stream.getTracks().forEach(t => t.stop()); }
@@ -141,12 +149,13 @@
             <img class="overlay" id="overlay-${step.key}" alt="Overlay">
             <button class="capture-btn" id="btn-${step.key}">📸 Capture</button>
           </div>
-          <img id="preview-${step.key}" class="photo-preview" src="" alt="No photo taken yet">
+          <button id="preview-${step.key}" class="photo-placeholder">No photo taken yet</button>
         `;
         photoGrid.appendChild(section);
         const videoEl = document.getElementById(`video-${step.key}`);
         const overlayEl = document.getElementById(`overlay-${step.key}`);
         const btnEl = document.getElementById(`btn-${step.key}`);
+        const placeholder = document.getElementById(`preview-${step.key}`);
         if (idx === 0) {
           document.getElementById(`camera-${step.key}`).style.display = 'block';
           initCamera(videoEl, overlayEl, step.overlay);
@@ -155,7 +164,12 @@
           canvas.width = videoEl.videoWidth;
           canvas.height = videoEl.videoHeight;
           canvas.getContext('2d').drawImage(videoEl, 0, 0);
-          document.getElementById(`preview-${step.key}`).src = canvas.toDataURL('image/png');
+          const dataUrl = canvas.toDataURL('image/png');
+          const img = document.createElement('img');
+          img.src = dataUrl;
+          img.id = `preview-${step.key}`;
+          img.className = 'photo-preview';
+          placeholder.replaceWith(img);
           stopCamera();
           document.getElementById(`camera-${step.key}`).style.display = 'none';
           const nextSection = photoGrid.children[idx+1];
