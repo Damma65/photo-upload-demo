@@ -19,11 +19,15 @@
       padding: 1rem 2rem;
       font-size: 1rem;
     }
+    #instructions {
+      font-weight: bold;
+      margin: 1rem 0;
+    }
   </style>
 </head>
 <body>
   <h1>Skadekontroll - Fota bilen</h1>
-  <p>Ge kameratillgång och ta bilder på bilen enligt instruktioner.</p>
+  <p id="instructions">Startar kameran...</p>
 
   <video id="video" autoplay playsinline></video>
   <br>
@@ -37,22 +41,49 @@
   </form>
 
   <script>
+    const instructions = [
+      "Höger sida fram",
+      "Vänster sida fram",
+      "Mitten fram",
+      "Däck fram vänster sida",
+      "Däck bak vänster sida",
+      "Hela vänster sida",
+      "Vänster sida bak",
+      "Höger sida bak",
+      "Mitten bak",
+      "Däck höger sida bak",
+      "Däck höger sida fram"
+    ];
+    let step = 0;
+
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const photo = document.getElementById('photo');
     const snap = document.getElementById('snap');
     const uploadForm = document.getElementById('uploadForm');
     const imageData = document.getElementById('imageData');
+    const instructionText = document.getElementById('instructions');
 
-    navigator.mediaDevices.getUserMedia({ video: true })
+    function updateInstruction() {
+      if (step < instructions.length) {
+        instructionText.textContent = `Steg ${step + 1} av ${instructions.length}: ${instructions[step]}`;
+      } else {
+        instructionText.textContent = "Tack! Alla bilder är tagna.";
+        snap.disabled = true;
+      }
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
       .then(stream => {
         video.srcObject = stream;
+        updateInstruction();
       })
       .catch(err => {
         alert('Kunde inte få tillgång till kamera: ' + err);
       });
 
     snap.addEventListener('click', () => {
+      if (step >= instructions.length) return;
       const context = canvas.getContext('2d');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
@@ -65,8 +96,12 @@
 
     uploadForm.addEventListener('submit', e => {
       e.preventDefault();
-      alert("Bilden skulle nu laddas upp till servern (mock)");
-      // Här skulle du skicka dataURL till din server via fetch/AJAX
+      // Här kan du ersätta detta med fetch för att skicka till server
+      alert(`Bild för '${instructions[step]}' laddades upp (mock).`);
+      step++;
+      photo.src = "";
+      uploadForm.style.display = 'none';
+      updateInstruction();
     });
   </script>
 </body>
