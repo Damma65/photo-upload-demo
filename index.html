@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -74,10 +73,9 @@
     <img id="overlay" class="overlay" src="overlay-front.png" alt="overlay">
   </div>
 
-  <br>
-  <button id="snap">📸 Take photo</button>
   <canvas id="canvas" style="display:none;"></canvas>
   <img id="photo" alt="Your captured image will appear here">
+  <button id="snap">📸 Take photo</button>
 
   <form id="uploadForm" style="display:none;">
     <input type="hidden" name="step" id="stepLabel">
@@ -127,6 +125,7 @@
         overlay.src = overlayMap[step] || "";
         overlay.style.display = 'block';
         photo.src = "";
+        snap.disabled = false;
       } else {
         document.getElementById('camera-container').style.display = 'none';
         video.srcObject?.getTracks().forEach(track => track.stop());
@@ -137,20 +136,16 @@
     }
 
     function startCamera() {
-      if (!streamStarted) {
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-          .then(stream => {
-            video.srcObject = stream;
-            videoStream = stream;
-            streamStarted = true;
-            updateInstruction();
-          })
-          .catch(err => {
-            alert('Unable to access the camera: ' + err);
-          });
-      } else {
-        updateInstruction();
-      }
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+          video.srcObject = stream;
+          videoStream = stream;
+          streamStarted = true;
+          updateInstruction();
+        })
+        .catch(err => {
+          alert('Unable to access the camera: ' + err);
+        });
     }
 
     snap.addEventListener('click', () => {
@@ -163,6 +158,7 @@
       photo.src = dataURL;
       stepLabel.value = instructions[step];
       uploadForm.style.display = 'block';
+      snap.disabled = true;
     });
 
     uploadForm.addEventListener('submit', e => {
