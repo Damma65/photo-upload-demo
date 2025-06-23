@@ -10,42 +10,6 @@
       padding: 1rem;
       text-align: center;
     }
-    video {
-      width: 85vw;
-      height: auto;
-      margin-top: 1rem;
-    }
-    canvas, img#photo {
-      width: 85vw;
-      height: auto;
-      margin-top: 1rem;
-    }
-    button {
-      margin: 1rem 0;
-      padding: 1rem 1.5rem;
-      font-size: 1rem;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-    }
-    #instructions {
-      font-weight: bold;
-      margin: 1rem 0;
-    }
-    .overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: auto;
-      pointer-events: none;
-      opacity: 0.7;
-    }
-    #camera-container {
-      position: relative;
-      display: inline-block;
-    }
     .logo-bar {
       display: flex;
       justify-content: center;
@@ -55,8 +19,35 @@
     .logo-bar img {
       height: 40px;
     }
+    .photo-section {
+      margin-bottom: 2rem;
+    }
+    .photo-preview {
+      width: 85vw;
+      height: auto;
+      border: 1px solid #ccc;
+      margin: 1rem 0;
+    }
+    .overlay-label {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
     #completion-message {
       display: none;
+    }
+    #overlay-image {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 85vw;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    #camera-wrapper {
+      position: relative;
+      display: inline-block;
     }
   </style>
 </head>
@@ -65,22 +56,21 @@
     <img src="greenmotion-logo.png" alt="Green Motion">
   </div>
 
-  <h1>Photo Upload - Vehicle Check</h1>
-  <p id="instructions">Initializing camera...</p>
+  <h1>Vehicle Damage Check</h1>
+  <p>Please take one photo for each required view below:</p>
 
-  <div id="camera-container">
-    <video id="video" autoplay playsinline></video>
-    <img id="overlay" class="overlay" src="overlay-front.png" alt="overlay">
+  <div id="photoGrid"></div>
+
+  <div id="camera" style="display:none;">
+    <div id="camera-wrapper">
+      <video id="video" autoplay playsinline style="width:85vw;"></video>
+      <img id="overlay-image" src="" alt="Overlay">
+    </div>
+    <br>
+    <button id="capture">📸 Capture</button>
   </div>
 
   <canvas id="canvas" style="display:none;"></canvas>
-  <img id="photo" alt="Your captured image will appear here">
-  <button id="snap" style="margin-top: 20px;">📸 Take photo</button>
-
-  <form id="uploadForm" style="display:none;">
-    <input type="hidden" name="step" id="stepLabel">
-    <button type="submit">📤 Upload</button>
-  </form>
 
   <div id="completion-message">
     <img src="greenmotion-logo.png" alt="Green Motion" style="margin-top: 2rem; height: 50px;">
@@ -91,85 +81,73 @@
   </div>
 
   <script>
-    const instructions = [
-      "Front of the vehicle",
-      "Rear of the vehicle",
-      "Left side of the vehicle",
-      "Right side of the vehicle"
+    const steps = [
+      { label: "Front of the vehicle", key: "front", overlay: "overlay-front.png" },
+      { label: "Rear of the vehicle", key: "rear", overlay: "overlay-rear.png" },
+      { label: "Left side of the vehicle", key: "left", overlay: "overlay-left.png" },
+      { label: "Right side of the vehicle", key: "right", overlay: "overlay-right.png" }
     ];
 
-    const overlayMap = {
-      0: "overlay-front.png",
-      1: "overlay-back.png",
-      2: "overlay-left.png",
-      3: "overlay-right.png"
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const capture = document.getElementById("capture");
+    const cameraContainer = document.getElementById("camera");
+    const overlayImage = document.getElementById("overlay-image");
+    const photoGrid = document.getElementById("photoGrid");
+    const completion = document.getElementById("completion-message");
+
+    let currentStep = null;
+    let stream;
+
+    function initCamera() {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
+        stream = s;
+        video.srcObject = stream;
+      });
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      cameraContainer.style.display = "none";
+    }
+
+    function buildUI() {
+      steps.forEach((step, idx) => {
+        const section = document.createElement("div");
+        section.className = "photo-section";
+        section.innerHTML = `
+          <span class="overlay-label">${step.label}</span>
+          <img id="preview-${step.key}" class="photo-preview" src="" alt="No photo taken yet">
+          <br>
+          <button onclick="takePhoto('${step.key}')">📸 Take Photo</button>
+        `;
+        photoGrid.appendChild(section);
+      });
+    }
+
+    window.takePhoto = function (key) {
+      currentStep = key;
+      const overlayFile = steps.find(step => step.key === key)?.overlay || "";
+      overlayImage.src = overlayFile;
+      cameraContainer.style.display = "block";
+      initCamera();
     };
 
-    let step = 0;
-    let streamStarted = false;
-    let videoStream;
-
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const photo = document.getElementById('photo');
-    const snap = document.getElementById('snap');
-    const uploadForm = document.getElementById('uploadForm');
-    const stepLabel = document.getElementById('stepLabel');
-    const instructionText = document.getElementById('instructions');
-    const overlay = document.getElementById('overlay');
-    const completion = document.getElementById('completion-message');
-
-    function updateInstruction() {
-      if (step < instructions.length) {
-        instructionText.textContent = `Step ${step + 1} of ${instructions.length}: ${instructions[step]}`;
-        overlay.src = overlayMap[step] || "";
-        overlay.style.display = 'block';
-        photo.src = "";
-        snap.disabled = false;
-      } else {
-        document.getElementById('camera-container').style.display = 'none';
-        video.srcObject?.getTracks().forEach(track => track.stop());
-        document.getElementById('snap').style.display = 'none';
-        instructionText.style.display = 'none';
-        completion.style.display = 'block';
-      }
-    }
-
-    function startCamera() {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then(stream => {
-          video.srcObject = stream;
-          videoStream = stream;
-          streamStarted = true;
-          updateInstruction();
-        })
-        .catch(err => {
-          alert('Unable to access the camera: ' + err);
-        });
-    }
-
-    snap.addEventListener('click', () => {
-      if (step >= instructions.length) return;
-      const context = canvas.getContext('2d');
+    capture.addEventListener("click", () => {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0);
-      const dataURL = canvas.toDataURL('image/png');
-      photo.src = dataURL;
-      stepLabel.value = instructions[step];
-      uploadForm.style.display = 'block';
-      snap.disabled = true;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+      const dataUrl = canvas.toDataURL("image/png");
+      document.getElementById("preview-" + currentStep).src = dataUrl;
+      stopCamera();
+      if ([...document.querySelectorAll(".photo-preview")].every(img => img.src && img.src.includes("data:image"))) {
+        completion.style.display = "block";
+      }
     });
 
-    uploadForm.addEventListener('submit', e => {
-      e.preventDefault();
-      alert(`Image for '${instructions[step]}' uploaded!`);
-      step++;
-      uploadForm.style.display = 'none';
-      updateInstruction();
-    });
-
-    startCamera();
+    buildUI();
   </script>
 </body>
 </html>
