@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fota bilen - Skadekontroll</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      text-align: center;
+    }
+    video, canvas, img {
+      max-width: 100%;
+      margin-top: 1rem;
+    }
+    button {
+      margin: 1rem 0;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Skadekontroll - Fota bilen</h1>
+  <p>Ge kameratillgång och ta bilder på bilen enligt instruktioner.</p>
+
+  <video id="video" autoplay playsinline></video>
+  <br>
+  <button id="snap">📸 Ta bild</button>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="photo" alt="Din bild visas här">
+
+  <form id="uploadForm" style="display:none;">
+    <input type="hidden" name="image" id="imageData">
+    <button type="submit">📤 Ladda upp</button>
+  </form>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const photo = document.getElementById('photo');
+    const snap = document.getElementById('snap');
+    const uploadForm = document.getElementById('uploadForm');
+    const imageData = document.getElementById('imageData');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert('Kunde inte få tillgång till kamera: ' + err);
+      });
+
+    snap.addEventListener('click', () => {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0);
+      const dataURL = canvas.toDataURL('image/png');
+      photo.src = dataURL;
+      imageData.value = dataURL;
+      uploadForm.style.display = 'block';
+    });
+
+    uploadForm.addEventListener('submit', e => {
+      e.preventDefault();
+      alert("Bilden skulle nu laddas upp till servern (mock)");
+      // Här skulle du skicka dataURL till din server via fetch/AJAX
+    });
+  </script>
+</body>
+</html>
