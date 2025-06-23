@@ -95,6 +95,22 @@
     }
     .capture-btn:hover { background-color: #0056b3; }
     .capture-btn:active { transform: scale(0.98); }
+    .retake-btn {
+      width: 100%;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-top: 0.5rem;
+      transition: background-color 0.2s, transform 0.1s;
+      display: none;
+    }
+    .retake-btn:hover { background-color: #c82333; }
+    .retake-btn:active { transform: scale(0.98); }
     /* Completion */
     #completion-message {
       display: none;
@@ -114,7 +130,7 @@
     <img src="greenmotion-logo.png" alt="Green Motion">
   </div>
   <h1>Vehicle Damage Check</h1>
-  <p class="subtitle">Please take one photo for each required view below.</p>
+  <p class="subtitle"><strong>Please take one photo for each required view below.</strong> Use the guides to take the correct picture. The pictures will be added to the rental contract in Wheels.</p>
   <div id="photoGrid"></div>
   <canvas id="canvas" style="display:none;"></canvas>
   <div id="completion-message">
@@ -150,12 +166,14 @@
             <button class="capture-btn" id="btn-${step.key}">📸 Capture</button>
           </div>
           <button id="preview-${step.key}" class="photo-placeholder">No photo taken yet</button>
+          <button class="retake-btn" id="retake-${step.key}">🔄 Retake</button>
         `;
         photoGrid.appendChild(section);
         const videoEl = document.getElementById(`video-${step.key}`);
         const overlayEl = document.getElementById(`overlay-${step.key}`);
         const btnEl = document.getElementById(`btn-${step.key}`);
         const placeholder = document.getElementById(`preview-${step.key}`);
+        const retakeBtn = document.getElementById(`retake-${step.key}`);
         if (idx === 0) {
           document.getElementById(`camera-${step.key}`).style.display = 'block';
           initCamera(videoEl, overlayEl, step.overlay);
@@ -172,6 +190,18 @@
           placeholder.replaceWith(img);
           stopCamera();
           document.getElementById(`camera-${step.key}`).style.display = 'none';
+          retakeBtn.style.display = 'block';
+          retakeBtn.addEventListener('click', () => {
+            img.remove();
+            retakeBtn.style.display = 'none';
+            const newPlaceholder = document.createElement('button');
+            newPlaceholder.id = `preview-${step.key}`;
+            newPlaceholder.className = 'photo-placeholder';
+            newPlaceholder.textContent = 'No photo taken yet';
+            section.appendChild(newPlaceholder);
+            document.getElementById(`camera-${step.key}`).style.display = 'block';
+            initCamera(videoEl, overlayEl, step.overlay);
+          });
           const nextSection = photoGrid.children[idx+1];
           if (nextSection) {
             nextSection.querySelector('.camera-wrapper').style.display = 'block';
