@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,81 +6,113 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Damage Check - Photo Upload</title>
   <style>
+    /* Global Styles */
     body {
-      font-family: sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #eef2f5;
+      margin: 0;
       padding: 1rem;
+      color: #333;
       text-align: center;
     }
-    .logo-bar {
-      display: flex;
-      justify-content: center;
-      gap: 2rem;
-      margin-bottom: 1rem;
+    .logo-bar img { height: 50px; margin-bottom: 1rem; }
+    h1 {
+      margin-top: 0;
+      font-size: 1.75rem;
+      color: #2c3e50;
     }
-    .logo-bar img {
-      height: 40px;
+    p.subtitle {
+      color: #555;
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
     }
+    /* Photo Section */
     .photo-section {
-      margin-bottom: 2rem;
-    }
-    .photo-preview {
-      width: 85vw;
-      height: auto;
-      border: 1px solid #ccc;
-      margin: 1rem 0;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      padding: 1rem;
+      margin: 1rem auto;
+      max-width: 400px;
     }
     .overlay-label {
       font-weight: bold;
       margin-bottom: 0.5rem;
       display: block;
+      font-size: 1.1rem;
+      color: #34495e;
     }
-    #completion-message {
+    .photo-preview {
+      width: 100%;
+      max-width: 360px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      margin: 0.5rem 0;
+      object-fit: cover;
+    }
+    /* Camera Wrapper */
+    .camera-wrapper {
+      position: relative;
       display: none;
+      margin: 0.5rem 0;
     }
-    #overlay-image {
+    .camera-wrapper video {
+      width: 100%;
+      border-radius: 8px;
+    }
+    .camera-wrapper img.overlay {
       position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 85vw;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
       opacity: 0.6;
       pointer-events: none;
+      mix-blend-mode: screen;
+      border-radius: 8px;
     }
-    #camera-wrapper {
-      position: relative;
-      display: inline-block;
+    /* Buttons */
+    .capture-btn {
+      width: 100%;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-top: 0.5rem;
+      transition: background-color 0.2s, transform 0.1s;
     }
+    .capture-btn:hover { background-color: #0056b3; }
+    .capture-btn:active { transform: scale(0.98); }
+    /* Completion */
+    #completion-message {
+      display: none;
+      background: #fff;
+      padding: 1.5rem;
+      margin: 2rem auto 0;
+      border-radius: 10px;
+      max-width: 400px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    #completion-message img { height: 50px; margin-bottom: 1rem; }
+    #completion-message p { color: #2c3e50; line-height: 1.5; font-size: 1rem; }
   </style>
 </head>
 <body>
   <div class="logo-bar">
     <img src="greenmotion-logo.png" alt="Green Motion">
   </div>
-
   <h1>Vehicle Damage Check</h1>
-  <p>Please take one photo for each required view below:</p>
-
+  <p class="subtitle">Please take one photo for each required view below.</p>
   <div id="photoGrid"></div>
-
-  <div id="camera" style="display:none;">
-    <div id="camera-wrapper">
-      <video id="video" autoplay playsinline style="width:85vw;"></video>
-      <img id="overlay-image" src="" alt="Overlay">
-    </div>
-    <br>
-    <button id="capture">📸 Capture</button>
-  </div>
-
   <canvas id="canvas" style="display:none;"></canvas>
-
   <div id="completion-message">
-    <img src="greenmotion-logo.png" alt="Green Motion" style="margin-top: 2rem; height: 50px;">
-    <p style="font-size: 1.2rem; margin-top: 1rem;">
-      You're all set! Have a great rental period and enjoy your journey.<br>
-      If anything comes up during your rental, feel free to contact us at <a href="mailto:rescue@greenmotion.com">rescue@greenmotion.com</a>
-    </p>
+    <img src="greenmotion-logo.png" alt="Green Motion">
+    <p>You're all set! Have a great rental period and enjoy your journey.<br>
+    If anything comes up, contact us at <a href="mailto:rescue@greenmotion.com">rescue@greenmotion.com</a>.</p>
   </div>
-
   <script>
     const steps = [
       { label: "Front of the vehicle", key: "front", overlay: "overlay-front.png" },
@@ -87,66 +120,62 @@
       { label: "Left side of the vehicle", key: "left", overlay: "overlay-left.png" },
       { label: "Right side of the vehicle", key: "right", overlay: "overlay-right.png" }
     ];
-
-    const video = document.getElementById("video");
     const canvas = document.getElementById("canvas");
-    const capture = document.getElementById("capture");
-    const cameraContainer = document.getElementById("camera");
-    const overlayImage = document.getElementById("overlay-image");
     const photoGrid = document.getElementById("photoGrid");
     const completion = document.getElementById("completion-message");
-
-    let currentStep = null;
     let stream;
-
-    function initCamera() {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
-        stream = s;
-        video.srcObject = stream;
-      });
+    function initCamera(videoEl, overlayEl, src) {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(s => { stream = s; videoEl.srcObject = stream; overlayEl.src = src; })
+        .catch(err => alert('Unable to access camera: ' + err));
     }
-
-    function stopCamera() {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      cameraContainer.style.display = "none";
-    }
-
+    function stopCamera() { if (stream) stream.getTracks().forEach(t => t.stop()); }
     function buildUI() {
       steps.forEach((step, idx) => {
         const section = document.createElement("div");
         section.className = "photo-section";
         section.innerHTML = `
           <span class="overlay-label">${step.label}</span>
+          <div class="camera-wrapper" id="camera-${step.key}">
+            <video playsinline autoplay muted id="video-${step.key}"></video>
+            <img class="overlay" id="overlay-${step.key}" alt="Overlay">
+            <button class="capture-btn" id="btn-${step.key}">📸 Capture</button>
+          </div>
           <img id="preview-${step.key}" class="photo-preview" src="" alt="No photo taken yet">
-          <br>
-          <button onclick="takePhoto('${step.key}')">📸 Take Photo</button>
         `;
         photoGrid.appendChild(section);
+        const videoEl = document.getElementById(`video-${step.key}`);
+        const overlayEl = document.getElementById(`overlay-${step.key}`);
+        const btnEl = document.getElementById(`btn-${step.key}`);
+        if (idx === 0) {
+          document.getElementById(`camera-${step.key}`).style.display = 'block';
+          initCamera(videoEl, overlayEl, step.overlay);
+        }
+        btnEl.addEventListener('click', () => {
+          canvas.width = videoEl.videoWidth;
+          canvas.height = videoEl.videoHeight;
+          canvas.getContext('2d').drawImage(videoEl, 0, 0);
+          document.getElementById(`preview-${step.key}`).src = canvas.toDataURL('image/png');
+          stopCamera();
+          document.getElementById(`camera-${step.key}`).style.display = 'none';
+          const nextSection = photoGrid.children[idx+1];
+          if (nextSection) {
+            nextSection.querySelector('.camera-wrapper').style.display = 'block';
+            initCamera(
+              nextSection.querySelector('video'),
+              nextSection.querySelector('img.overlay'),
+              steps[idx+1].overlay
+            );
+            nextSection.scrollIntoView({ behavior: 'smooth' });
+          } else {
+            if ([...document.querySelectorAll('.photo-preview')].every(img=>img.src.includes('data:image'))) {
+              completion.style.display = 'block';
+              completion.scrollIntoView({ behavior: 'smooth' });
+            }
+          }
+        });
       });
     }
-
-    window.takePhoto = function (key) {
-      currentStep = key;
-      const overlayFile = steps.find(step => step.key === key)?.overlay || "";
-      overlayImage.src = overlayFile;
-      cameraContainer.style.display = "block";
-      initCamera();
-    };
-
-    capture.addEventListener("click", () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-      const dataUrl = canvas.toDataURL("image/png");
-      document.getElementById("preview-" + currentStep).src = dataUrl;
-      stopCamera();
-      if ([...document.querySelectorAll(".photo-preview")].every(img => img.src && img.src.includes("data:image"))) {
-        completion.style.display = "block";
-      }
-    });
-
     buildUI();
   </script>
 </body>
