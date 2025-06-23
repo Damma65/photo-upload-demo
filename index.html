@@ -14,17 +14,17 @@
     video {
       width: 85vw;
       height: auto;
-      max-width: 100%;
       margin-top: 1rem;
     }
-    canvas, img {
-      max-width: 85vw;
+    canvas, img#photo {
+      width: 85vw;
+      height: auto;
       margin-top: 1rem;
     }
     button {
       margin: 1rem 0;
-      padding: 2rem 3rem;
-      font-size: 1.5rem;
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
       background-color: #007bff;
       color: white;
       border: none;
@@ -113,6 +113,7 @@
         instructionText.textContent = `Steg ${step + 1} av ${instructions.length}: ${instructions[step]}`;
         overlay.src = overlayMap[step] || "";
         overlay.style.display = 'block';
+        photo.src = "";
       } else {
         instructionText.textContent = "Tack! Alla bilder är tagna.";
         overlay.style.display = 'none';
