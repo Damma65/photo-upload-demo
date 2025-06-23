@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="sv">
 <head>
@@ -23,13 +24,30 @@
       font-weight: bold;
       margin: 1rem 0;
     }
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    #camera-container {
+      position: relative;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
   <h1>Skadekontroll - Fota bilen</h1>
   <p id="instructions">Startar kameran...</p>
 
-  <video id="video" autoplay playsinline></video>
+  <div id="camera-container">
+    <video id="video" autoplay playsinline></video>
+    <img id="overlay" class="overlay" src="overlay-front.png" alt="overlay">
+  </div>
+
   <br>
   <button id="snap">📸 Ta bild</button>
   <canvas id="canvas" style="display:none;"></canvas>
@@ -43,7 +61,7 @@
 
   <script>
     const instructions = [
-      "Höger sida fram",
+      "Bild på hela framsidan",
       "Vänster sida fram",
       "Mitten fram",
       "Däck fram vänster sida",
@@ -65,10 +83,17 @@
     const imageData = document.getElementById('imageData');
     const stepLabel = document.getElementById('stepLabel');
     const instructionText = document.getElementById('instructions');
+    const overlay = document.getElementById('overlay');
 
     function updateInstruction() {
       if (step < instructions.length) {
         instructionText.textContent = `Steg ${step + 1} av ${instructions.length}: ${instructions[step]}`;
+
+        if (step === 0) {
+          overlay.style.display = 'block';
+        } else {
+          overlay.style.display = 'none';
+        }
       } else {
         instructionText.textContent = "Tack! Alla bilder är tagna.";
         snap.disabled = true;
