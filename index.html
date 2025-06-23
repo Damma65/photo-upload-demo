@@ -61,17 +61,18 @@
   <script>
     const instructions = [
       "Bild på hela framsidan",
-      "Vänster sida fram",
-      "Mitten fram",
-      "Däck fram vänster sida",
-      "Däck bak vänster sida",
-      "Hela vänster sida",
-      "Vänster sida bak",
-      "Höger sida bak",
-      "Mitten bak",
-      "Däck höger sida bak",
-      "Däck höger sida fram"
+      "Bild på hela baksidan",
+      "Bild på hela vänstersidan",
+      "Bild på hela högersidan"
     ];
+
+    const overlayMap = {
+      0: "overlay-front.png",
+      1: "overlay-back.png",
+      2: "overlay-left.png",
+      3: "overlay-right.png"
+    };
+
     let step = 0;
 
     const video = document.getElementById('video');
@@ -86,9 +87,11 @@
     function updateInstruction() {
       if (step < instructions.length) {
         instructionText.textContent = `Steg ${step + 1} av ${instructions.length}: ${instructions[step]}`;
-        overlay.style.display = step === 0 ? 'block' : 'none';
+        overlay.src = overlayMap[step] || "";
+        overlay.style.display = 'block';
       } else {
         instructionText.textContent = "Tack! Alla bilder är tagna.";
+        overlay.style.display = 'none';
         snap.disabled = true;
       }
     }
