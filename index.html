@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fota bilen - Skadekontroll</title>
+  <title>Damage Check - Photo Upload</title>
   <style>
     body {
       font-family: sans-serif;
@@ -56,6 +56,9 @@
     .logo-bar img {
       height: 40px;
     }
+    #completion-message {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -63,8 +66,8 @@
     <img src="greenmotion-logo.png" alt="Green Motion">
   </div>
 
-  <h1>Skadekontroll - Fota bilen</h1>
-  <p id="instructions">Startar kameran...</p>
+  <h1>Photo Upload - Vehicle Check</h1>
+  <p id="instructions">Initializing camera...</p>
 
   <div id="camera-container">
     <video id="video" autoplay playsinline></video>
@@ -72,21 +75,29 @@
   </div>
 
   <br>
-  <button id="snap">📸 Ta bild</button>
+  <button id="snap">📸 Take photo</button>
   <canvas id="canvas" style="display:none;"></canvas>
-  <img id="photo" alt="Din bild visas här">
+  <img id="photo" alt="Your captured image will appear here">
 
   <form id="uploadForm" style="display:none;">
     <input type="hidden" name="step" id="stepLabel">
-    <button type="submit">📤 Ladda upp</button>
+    <button type="submit">📤 Upload</button>
   </form>
+
+  <div id="completion-message">
+    <img src="greenmotion-logo.png" alt="Green Motion" style="margin-top: 2rem; height: 50px;">
+    <p style="font-size: 1.2rem; margin-top: 1rem;">
+      You're all set! Have a great rental period and enjoy your journey.<br>
+      If anything comes up during your rental, feel free to contact us at <a href="mailto:rescue@greenmotion.com">rescue@greenmotion.com</a>
+    </p>
+  </div>
 
   <script>
     const instructions = [
-      "Bild på hela framsidan",
-      "Bild på hela baksidan",
-      "Bild på hela vänstersidan",
-      "Bild på hela högersidan"
+      "Front of the vehicle",
+      "Rear of the vehicle",
+      "Left side of the vehicle",
+      "Right side of the vehicle"
     ];
 
     const overlayMap = {
@@ -98,6 +109,7 @@
 
     let step = 0;
     let streamStarted = false;
+    let videoStream;
 
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
@@ -107,17 +119,20 @@
     const stepLabel = document.getElementById('stepLabel');
     const instructionText = document.getElementById('instructions');
     const overlay = document.getElementById('overlay');
+    const completion = document.getElementById('completion-message');
 
     function updateInstruction() {
       if (step < instructions.length) {
-        instructionText.textContent = `Steg ${step + 1} av ${instructions.length}: ${instructions[step]}`;
+        instructionText.textContent = `Step ${step + 1} of ${instructions.length}: ${instructions[step]}`;
         overlay.src = overlayMap[step] || "";
         overlay.style.display = 'block';
         photo.src = "";
       } else {
-        instructionText.textContent = "Tack! Alla bilder är tagna.";
-        overlay.style.display = 'none';
-        snap.disabled = true;
+        document.getElementById('camera-container').style.display = 'none';
+        video.srcObject?.getTracks().forEach(track => track.stop());
+        document.getElementById('snap').style.display = 'none';
+        instructionText.style.display = 'none';
+        completion.style.display = 'block';
       }
     }
 
@@ -126,11 +141,12 @@
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
           .then(stream => {
             video.srcObject = stream;
+            videoStream = stream;
             streamStarted = true;
             updateInstruction();
           })
           .catch(err => {
-            alert('Kunde inte få tillgång till kamera: ' + err);
+            alert('Unable to access the camera: ' + err);
           });
       } else {
         updateInstruction();
@@ -151,7 +167,7 @@
 
     uploadForm.addEventListener('submit', e => {
       e.preventDefault();
-      alert(`Bild för '${instructions[step]}' laddades upp!`);
+      alert(`Image for '${instructions[step]}' uploaded!`);
       step++;
       uploadForm.style.display = 'none';
       updateInstruction();
