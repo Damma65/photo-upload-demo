@@ -25,6 +25,10 @@
       margin: 1rem 0;
       padding: 2rem 3rem;
       font-size: 1.5rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
     }
     #instructions {
       font-weight: bold;
@@ -57,7 +61,6 @@
 <body>
   <div class="logo-bar">
     <img src="greenmotion-logo.png" alt="Green Motion">
-    <img src="gordion-logo.png" alt="Gordion">
   </div>
 
   <h1>Skadekontroll - Fota bilen</h1>
@@ -110,7 +113,6 @@
         instructionText.textContent = `Steg ${step + 1} av ${instructions.length}: ${instructions[step]}`;
         overlay.src = overlayMap[step] || "";
         overlay.style.display = 'block';
-        snap.disabled = false;
       } else {
         instructionText.textContent = "Tack! Alla bilder är tagna.";
         overlay.style.display = 'none';
@@ -144,16 +146,13 @@
       photo.src = dataURL;
       stepLabel.value = instructions[step];
       uploadForm.style.display = 'block';
-      snap.disabled = true;
     });
 
     uploadForm.addEventListener('submit', e => {
       e.preventDefault();
       alert(`Bild för '${instructions[step]}' laddades upp!`);
       step++;
-      photo.src = "";
       uploadForm.style.display = 'none';
-      snap.disabled = false;
       updateInstruction();
     });
 
