@@ -53,7 +53,7 @@
   <canvas id="canvas" style="display:none;"></canvas>
   <img id="photo" alt="Din bild visas här">
 
-  <form id="uploadForm" action="https://formspree.io/f/xyzjnjkz" method="POST" style="display:none;">
+  <form id="uploadForm" style="display:none;">
     <input type="hidden" name="step" id="stepLabel">
     <button type="submit">📤 Ladda upp</button>
   </form>
@@ -115,35 +115,15 @@
       photo.src = dataURL;
       stepLabel.value = instructions[step];
       uploadForm.style.display = 'block';
+    });
 
-      fetch(dataURL)
-        .then(res => res.blob())
-        .then(blob => {
-          const file = new File([blob], `bild_${step + 1}.png`, { type: "image/png" });
-          const formData = new FormData();
-          formData.append("image", file);
-          formData.append("step", stepLabel.value);
-
-          fetch(uploadForm.action, {
-            method: "POST",
-            body: formData,
-            headers: { 'Accept': 'application/json' }
-          })
-          .then(response => {
-            if (response.ok) {
-              alert(`Bild för '${instructions[step]}' laddades upp!`);
-              step++;
-              photo.src = "";
-              uploadForm.style.display = 'none';
-              updateInstruction();
-            } else {
-              alert('Uppladdningen misslyckades.');
-            }
-          })
-          .catch(error => {
-            alert('Fel vid uppladdning: ' + error.message);
-          });
-        });
+    uploadForm.addEventListener('submit', e => {
+      e.preventDefault();
+      alert(`Bild för '${instructions[step]}' laddades upp!`);
+      step++;
+      photo.src = "";
+      uploadForm.style.display = 'none';
+      updateInstruction();
     });
   </script>
 </body>
