@@ -6,25 +6,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fota bilen - Skadekontroll</title>
   <style>
-    body { font-family: sans-serif; padding: 1rem; text-align: center; }
-    video, canvas, img { max-width: 100%; margin-top: 1rem; }
-    button { margin: 1rem 0; padding: 1rem 2rem; font-size: 1rem; }
-    #instructions { font-weight: bold; margin: 1rem 0; }
-    .overlay { position: absolute; top: 0; left: 0; width: 100%; height: auto; pointer-events: none; opacity: 0.7; }
-    #camera-container { position: relative; display: inline-block; }
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      text-align: center;
+    }
+    video, canvas, img {
+      max-width: 100%;
+      margin-top: 1rem;
+    }
+    button {
+      margin: 1rem 0;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+    }
+    #instructions {
+      font-weight: bold;
+      margin: 1rem 0;
+    }
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    #camera-container {
+      position: relative;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
   <h1>Skadekontroll - Fota bilen</h1>
   <p id="instructions">Startar kameran...</p>
+
   <div id="camera-container">
     <video id="video" autoplay playsinline></video>
     <img id="overlay" class="overlay" src="overlay-front.png" alt="overlay">
   </div>
+
   <br>
   <button id="snap">📸 Ta bild</button>
   <canvas id="canvas" style="display:none;"></canvas>
   <img id="photo" alt="Din bild visas här">
+
   <form id="uploadForm" action="https://formspree.io/f/xyzjnjkz" method="POST" style="display:none;">
     <input type="hidden" name="step" id="stepLabel">
     <button type="submit">📤 Ladda upp</button>
@@ -32,10 +60,17 @@
 
   <script>
     const instructions = [
-      "Bild på hela framsidan", "Vänster sida fram", "Mitten fram",
-      "Däck fram vänster sida", "Däck bak vänster sida", "Hela vänster sida",
-      "Vänster sida bak", "Höger sida bak", "Mitten bak",
-      "Däck höger sida bak", "Däck höger sida fram"
+      "Bild på hela framsidan",
+      "Vänster sida fram",
+      "Mitten fram",
+      "Däck fram vänster sida",
+      "Däck bak vänster sida",
+      "Hela vänster sida",
+      "Vänster sida bak",
+      "Höger sida bak",
+      "Mitten bak",
+      "Däck höger sida bak",
+      "Däck höger sida fram"
     ];
     let step = 0;
 
@@ -59,8 +94,13 @@
     }
 
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-      .then(stream => { video.srcObject = stream; updateInstruction(); })
-      .catch(err => { alert('Kunde inte få tillgång till kamera: ' + err); });
+      .then(stream => {
+        video.srcObject = stream;
+        updateInstruction();
+      })
+      .catch(err => {
+        alert('Kunde inte få tillgång till kamera: ' + err);
+      });
 
     snap.addEventListener('click', () => {
       if (step >= instructions.length) return;
@@ -73,7 +113,6 @@
       stepLabel.value = instructions[step];
       uploadForm.style.display = 'block';
 
-      // Konvertera till fil
       fetch(dataURL)
         .then(res => res.blob())
         .then(blob => {
