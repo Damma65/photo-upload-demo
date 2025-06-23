@@ -74,6 +74,7 @@
     };
 
     let step = 0;
+    let streamStarted = false;
 
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
@@ -89,6 +90,7 @@
         instructionText.textContent = `Steg ${step + 1} av ${instructions.length}: ${instructions[step]}`;
         overlay.src = overlayMap[step] || "";
         overlay.style.display = 'block';
+        snap.disabled = false;
       } else {
         instructionText.textContent = "Tack! Alla bilder är tagna.";
         overlay.style.display = 'none';
@@ -96,14 +98,21 @@
       }
     }
 
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-      .then(stream => {
-        video.srcObject = stream;
+    function startCamera() {
+      if (!streamStarted) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+          .then(stream => {
+            video.srcObject = stream;
+            streamStarted = true;
+            updateInstruction();
+          })
+          .catch(err => {
+            alert('Kunde inte få tillgång till kamera: ' + err);
+          });
+      } else {
         updateInstruction();
-      })
-      .catch(err => {
-        alert('Kunde inte få tillgång till kamera: ' + err);
-      });
+      }
+    }
 
     snap.addEventListener('click', () => {
       if (step >= instructions.length) return;
@@ -115,6 +124,7 @@
       photo.src = dataURL;
       stepLabel.value = instructions[step];
       uploadForm.style.display = 'block';
+      snap.disabled = true;
     });
 
     uploadForm.addEventListener('submit', e => {
@@ -123,8 +133,11 @@
       step++;
       photo.src = "";
       uploadForm.style.display = 'none';
+      snap.disabled = false;
       updateInstruction();
     });
+
+    startCamera();
   </script>
 </body>
 </html>
