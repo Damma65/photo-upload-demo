@@ -11,14 +11,20 @@
       padding: 1rem;
       text-align: center;
     }
-    video, canvas, img {
+    video {
+      width: 85vw;
+      height: auto;
       max-width: 100%;
+      margin-top: 1rem;
+    }
+    canvas, img {
+      max-width: 85vw;
       margin-top: 1rem;
     }
     button {
       margin: 1rem 0;
-      padding: 1rem 2rem;
-      font-size: 1rem;
+      padding: 2rem 3rem;
+      font-size: 1.5rem;
     }
     #instructions {
       font-weight: bold;
@@ -37,9 +43,23 @@
       position: relative;
       display: inline-block;
     }
+    .logo-bar {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 1rem;
+    }
+    .logo-bar img {
+      height: 40px;
+    }
   </style>
 </head>
 <body>
+  <div class="logo-bar">
+    <img src="greenmotion-logo.png" alt="Green Motion">
+    <img src="gordion-logo.png" alt="Gordion">
+  </div>
+
   <h1>Skadekontroll - Fota bilen</h1>
   <p id="instructions">Startar kameran...</p>
 
